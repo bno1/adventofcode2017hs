@@ -20,24 +20,35 @@ executable day01
   main-is:             day01.hs
   default-language:    Haskell2010
   build-depends:       base
+  ghc-options:         -Wall -rtsopts
 
 executable day02
   hs-source-dirs:      src/
   main-is:             day02.hs
   default-language:    Haskell2010
   build-depends:       base
+  ghc-options:         -Wall -rtsopts
 
 executable day03
   hs-source-dirs:      src/
   main-is:             day03.hs
   default-language:    Haskell2010
   build-depends:       base, containers >= 0.5.7, mtl >= 2.2
+  ghc-options:         -Wall -rtsopts
 
 executable day04
   hs-source-dirs:      src/
   main-is:             day04.hs
   default-language:    Haskell2010
   build-depends:       base, containers >= 0.5.7
+  ghc-options:         -Wall -rtsopts
+
+executable day05
+  hs-source-dirs:      src/
+  main-is:             day05.hs
+  default-language:    Haskell2010
+  build-depends:       base, vector >= 0.5.7
+  ghc-options:         -Wall -rtsopts -O2
 
 source-repository head
   type:     git

@@ -5,7 +5,7 @@ import qualified Data.Set as S
 
 
 hasDuplicates :: (Traversable t, Ord a) => t a -> Bool
-hasDuplicates = or . snd . mapAccumL f S.empty
+hasDuplicates = or . snd . mapAccumR f S.empty
     where f s x = let s' = S.insert x s in (s', S.size s' == S.size s)
 
 main :: IO ()

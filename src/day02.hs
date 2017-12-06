@@ -20,7 +20,7 @@ quotient l = head [
 
 main :: IO ()
 main = do
-    matrix <- (map (map read . words) . lines) <$> getContents
+    matrix <- ((map (map read . words) . lines) <$> getContents) :: IO [[Int]]
 
     putStr "Solution 1: "
     print $ sum $ map minMax matrix

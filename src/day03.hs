@@ -12,14 +12,15 @@ import qualified Data.Sequence as S
 seqLookup :: Int -> S.Seq a -> Maybe a
 seqLookup i s = if S.length s <= i then Nothing else Just $ S.index s i
 
-spiralToCart :: (Integral a) => a -> (a, a)
+spiralToCart :: (Integral a, Show a) => a -> (a, a)
 spiralToCart 1 = (0, 0)
 spiralToCart n = case q of
         0 -> (a, b)
         1 -> (-b, a)
         2 -> (-a, -b)
         3 -> (b, -a)
-    where lvl = (1+) . ceiling $ (sqrt (fromIntegral n) - 3.0) / 2.0
+        x -> error ("Unexpected quotient " ++ show x)
+    where lvl = (1+) . ceiling $ (sqrt (fromIntegral n :: Float) - 3.0) / 2.0
           base = 2 + 4 * lvl * (lvl - 1)
           (q, r) = quotRem (n - base) (2 * lvl)
           a = lvl
@@ -92,7 +93,10 @@ mhNorm = uncurry (+) . (abs *** abs)
 
 main :: IO ()
 main = do
-    input <- read <$> getLine
+    input <- (read <$> getLine) :: IO Int
 
+    putStr "Solution 1: "
     print $ mhNorm $ spiralToCart input
+
+    putStr "Solution 2: "
     print $ spiralGreaterThan input
