@@ -1,68 +1,101 @@
 module Main where
 
-import Data.Maybe (fromJust, fromMaybe)
-import Text.Parsec hiding (State, Empty)
+import Control.Applicative ((<|>))
 import Control.Monad.State
+import Data.List
+import Data.Maybe (fromJust, fromMaybe)
+
+import qualified Text.Parsec as P
 import qualified Data.Map as M
+
 
 data Tree = Empty
           | Node String Int [Tree]
           deriving (Show, Eq)
 
-data MapEntry = MapEntry String Int [String] deriving (Show)
+data ProgDescr = ProgDescr
+    { progParent :: String
+    , progWeight :: Int
+    , progChildren :: [String]
+    } deriving (Show)
 
-entry :: MapEntry
-entry = MapEntry "" 0 []
+progDescr :: ProgDescr
+progDescr = ProgDescr {progParent = "", progWeight = 0, progChildren = []}
 
-initEntry :: Int -> [String] -> MapEntry -> MapEntry
-initEntry w chld (MapEntry parent _ _) = MapEntry parent w chld
+alterProg :: Int -> [String] -> Maybe ProgDescr -> ProgDescr
+alterProg w chld =
+    (\e -> e{progWeight = w, progChildren = chld}) . fromMaybe progDescr
 
-setParent :: String -> MapEntry -> MapEntry
-setParent parent (MapEntry _ w chld) = MapEntry parent w chld
+alterProgParent :: String -> Maybe ProgDescr -> ProgDescr
+alterProgParent parent = (\e -> e{progParent = parent}) . fromMaybe progDescr
 
-lineParse :: String -> Either String (String, Int, [String])
-lineParse = parseErr . parse p "lineParse"
+findMap :: (a -> Bool) -> M.Map k a -> Maybe (k, a)
+findMap f = M.foldrWithKey (\k a r -> if f a then Just (k, a) else r) Nothing
+
+parseLine :: String -> Either String (String, Int, [String])
+parseLine = perrToStr . P.parse p "parseLine"
     where
-        parseErr (Left err) = Left $ show err
-        parseErr (Right x) = Right x
+        perrToStr (Left err) = Left $ show err
+        perrToStr (Right x) = Right x
         p = do
-            prog <- many1 alphaNum
-            spaces
-            _ <- char '('
-            weight <- many1 digit
-            _ <- char ')'
-            children <- option [] $ do
-                spaces
-                _ <- string "->"
-                spaces
-                sepBy1 (many1 alphaNum) (char ',' >> spaces)
-            eof
+            prog <- P.many1 P.alphaNum
+            P.spaces
+            _ <- P.char '('
+            weight <- P.many1 P.digit
+            _ <- P.char ')'
+            children <- P.option [] $ do
+                P.spaces
+                _ <- P.string "->"
+                P.spaces
+                P.sepBy1 (P.many1 P.alphaNum) (P.char ',' >> P.spaces)
+            P.eof
             return (prog, read weight, children)
 
 buildTree :: [(String, Int, [String])] -> Tree
 buildTree lst = tree root
     where
-        helper :: (String, Int, [String]) -> State (M.Map String MapEntry) ()
+        helper :: (String, Int, [String]) -> State (M.Map String ProgDescr) ()
         helper (prog, weight, chld) = do
-            modify $ M.alter (Just . initEntry weight chld . fromMaybe entry) prog
-            forM_ chld $ modify . M.alter (Just . setParent prog. fromMaybe entry)
-        emap = execState (forM_ lst helper) M.empty
-        root = fromJust $ M.foldrWithKey (\k (MapEntry p _ _) acc -> if null p then Just k else acc) Nothing emap
-        tree prog = case M.lookup prog emap of
-            Nothing -> Empty
-            Just (MapEntry _ weight chld) -> Node prog weight (map tree chld)
+            modify $ M.alter (Just . alterProg weight chld) prog
+            forM_ chld $ modify . M.alter (Just . alterProgParent prog)
 
-checkBalance :: Tree -> Int
-checkBalance = undefined
---checkBalance (Node _ w chld) = map checkBalance chld
+        progMap = execState (forM_ lst helper) M.empty
+
+        root = fst . fromJust $ findMap (null . progParent) progMap
+
+        tree prog = case M.lookup prog progMap of
+            Nothing -> Empty
+            Just (ProgDescr _ weight chld) -> Node prog weight (map tree chld)
+
+findUnbalanced :: Tree -> Maybe (Int, Int, Tree)
+findUnbalanced = snd . helper
+    where
+        helper Empty = (0, Nothing)
+        helper (Node _ w chld) = (weight, xs')
+            where
+                rec = map helper chld
+                weights = map fst rec
+                weight_chld = zip weights chld
+                weight = w + sum weights
+                xs = msum $ map snd rec
+                xs' = xs <|> case group . sort $ weights of
+                    [] -> Nothing
+                    [_] -> Nothing
+                    [[act], ref:_] -> (,,) ref act <$> lookup act weight_chld
+                    [ref:_, [act]] -> (,,) ref act <$> lookup act weight_chld
+                    _ -> error $ "Unexpected weights " ++ show weights
 
 main :: IO ()
 main = do
     input_raw <- lines <$> getContents
-    let input = map (either error id . lineParse) input_raw
+    let input = map (either error id . parseLine) input_raw
 
     let tree = buildTree input
-    let (Node root _ _) = tree
+    let root@(Node rootProg _ _) = tree
+    let Just (expected, actual, Node _ w _) = findUnbalanced root
 
-    print root
-    return ()
+    putStr "Solution 1: "
+    putStrLn rootProg
+
+    putStr "Solution 2: "
+    print $ w + (expected - actual)
