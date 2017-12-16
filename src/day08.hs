@@ -2,6 +2,7 @@
 
 module Main where
 
+import Data.Maybe (fromJust)
 import Control.Applicative ((<|>))
 import Control.Monad.State
 
@@ -9,28 +10,38 @@ import qualified Data.Map as M
 import qualified Text.Parsec as P
 
 
+type CPUWord = Int
+
 data Operand
     = Reg String
-    | Const Int
+    | Const CPUWord
     deriving (Show)
 
-data Condition
-    = CGT Operand Operand
-    | CGE Operand Operand
-    | CEQ Operand Operand
-    | CNE Operand Operand
-    | CLE Operand Operand
-    | CLT Operand Operand
+data Comparison
+    = CGT
+    | CGE
+    | CEQ
+    | CNE
+    | CLE
+    | CLT
+    deriving (Show)
+
+data Condition = Condition
+    { condComp :: Comparison
+    , condOp1 :: Operand
+    , condOp2 :: Operand
+    }
     deriving (Show)
 
 data Instruction
-    = Inc String Int Condition
-    | Dec String Int Condition
+    = Add String CPUWord Condition
     deriving (Show)
 
-newtype CPU = CPU
-    { cpuRegs :: M.Map String Int
+data CPU = CPU
+    { cpuRegs :: M.Map String CPUWord
+    , cpuMaxReg :: Maybe Word
     }
+    deriving (Show)
 
 parseInt :: (P.Stream s m Char, Read a, Integral a) => P.ParsecT s u m a
 parseInt = do
@@ -41,7 +52,7 @@ parseInt = do
 
     return $ case sign of
         '+' -> read magnitude
-        '-' -> - read magnitude
+        '-' -> -read magnitude
         _ -> undefined
 
 parseOperand :: P.Stream s m Char => P.ParsecT s u m Operand
@@ -53,8 +64,8 @@ parseInstr = perrToStr . P.parse p "parseInstr"
         perrToStr (Left err) = Left $ show err
         perrToStr (Right x) = Right x
         comps = zip [">=", ">", "==", "!=", "<=", "<"]
-                    [CGE, CGT,  CEQ,  CNE,  CLE,  CLT]
-        instrs = zip ["inc", "dec"] [Inc, Dec]
+                    [CGE,  CGT, CEQ,  CNE,  CLE,  CLT]
+        instrs = zip ["inc", "dec"] [1, -1]
         p = do
             reg <- P.many1 P.letter
             P.spaces
@@ -72,24 +83,56 @@ parseInstr = perrToStr . P.parse p "parseInstr"
             P.spaces
             comp_b <- parseOperand
 
-            let Just cond = (\f -> f comp_a comp_b) <$> lookup comp comps
-            let Just instr = (\f -> f reg ammount cond) <$> lookup op instrs
+            let Just cond = (\f -> Condition f comp_a comp_b) <$> lookup comp comps
+            let Just instr = (\f -> Add reg (f * ammount) cond) <$> lookup op instrs
 
             return instr
 
-getRegister :: String -> State CPU Int
+runComparison :: Ord a => Comparison -> a -> a -> Bool
+runComparison CGT = (>)
+runComparison CGE = (>=)
+runComparison CEQ = (==)
+runComparison CNE = (/=)
+runComparison CLE = (<=)
+runComparison CLT = (<)
+
+getRegister :: String -> State CPU CPUWord
 getRegister reg = gets (M.findWithDefault 0 reg . cpuRegs)
 
+getValue :: Operand -> State CPU CPUWord
+getValue (Reg reg) = getRegister reg
+getValue (Const val) = return val
+
 modifyRegister :: String -> Int -> State CPU ()
-modifyRegister reg delta =
-    modify (\cpu -> cpu{cpuRegs = M.insertWith (+) reg delta $ cpuRegs cpu})
+modifyRegister reg delta = modify (\cpu -> let
+            newVal = delta + M.findWithDefault 0 reg (cpuRegs cpu)
+            newMax = maybe newVal (max newVal . fromIntegral) $ cpuMaxReg cpu
+            newRegs = M.insert reg newVal $ cpuRegs cpu
+        in
+            cpu{cpuRegs = newRegs, cpuMaxReg = Just $ fromIntegral newMax}
+    )
+
+checkCondition :: Condition -> State CPU Bool
+checkCondition (Condition comp op1 op2) =
+    liftM2 (runComparison comp) (getValue op1) (getValue op2)
 
 runInstr :: Instruction ->  State CPU ()
-runInstr = undefined
+runInstr (Add reg delta cond) = do
+    b <- checkCondition cond
+    when b $ modifyRegister reg delta
+
+runProgram :: [Instruction] -> CPU
+runProgram instrs = execState (forM instrs runInstr) (CPU M.empty Nothing)
 
 main :: IO ()
 main = do
     input_raw <- lines <$> getContents
     let input = map (either error id . parseInstr) input_raw
 
-    print input
+    let finalCPU = runProgram input
+
+    putStr "Solution 1: "
+    print $ maximum $ cpuRegs finalCPU
+
+    putStr "Solution 2: "
+    print $ fromJust $ cpuMaxReg finalCPU
