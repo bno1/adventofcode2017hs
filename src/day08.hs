@@ -3,6 +3,7 @@
 module Main where
 
 import Data.Maybe (fromJust)
+import Common.Parsers
 import Control.Applicative ((<|>))
 import Control.Monad.State
 
@@ -43,20 +44,8 @@ data CPU = CPU
     }
     deriving (Show)
 
-parseInt :: (P.Stream s m Char, Read a, Integral a) => P.ParsecT s u m a
-parseInt = do
-    signs <- P.many $ P.oneOf "+-"
-    magnitude <- P.many1 P.digit
-
-    let sign = foldl (\a b -> if a == b then '+' else '-') '+' signs
-
-    return $ case sign of
-        '+' -> read magnitude
-        '-' -> -read magnitude
-        _ -> undefined
-
 parseOperand :: P.Stream s m Char => P.ParsecT s u m Operand
-parseOperand = (Reg <$> P.many1 P.letter) <|> (Const <$> parseInt)
+parseOperand = (Reg <$> P.many1 P.letter) <|> (Const <$> parseIntegral)
 
 parseInstr :: String -> Either String Instruction
 parseInstr = perrToStr . P.parse p "parseInstr"
@@ -72,7 +61,7 @@ parseInstr = perrToStr . P.parse p "parseInstr"
 
             op <- P.choice $ map (P.try . P.string . fst) instrs
             P.spaces
-            ammount <- parseInt
+            ammount <- parseIntegral
             P.spaces
 
             _ <- P.string "if"

@@ -3,6 +3,7 @@ module Main where
 import Control.Monad (msum)
 import Data.Maybe (fromJust)
 import Data.List (elemIndex)
+
 import qualified Data.Vector.Generic as VG
 import qualified Data.Vector.Unboxed as VU
 

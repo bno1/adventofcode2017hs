@@ -2,30 +2,26 @@
 
 module Main where
 
-import Data.List
+import Common.Parsers
 import Control.Monad.State
+import Data.List
 
-import qualified Data.IntSet as S
 import qualified Data.IntMap as M
+import qualified Data.IntSet as S
 import qualified Text.Parsec as P
 
 
 type Graph = M.IntMap [Int]
 
-parseNumber :: (P.Stream s m Char) => P.ParsecT s u m Int
-parseNumber = read <$> P.many1 P.digit
-
 parseLine :: String -> Either String (Int, [Int])
-parseLine = perrToStr . P.runParser p () "parseLine"
+parseLine = parseErrToStr . P.runParser p () "parseLine"
     where
-        perrToStr (Left err) = Left $ show err
-        perrToStr (Right v) = Right v
         p = do
-            n <- parseNumber
+            n <- parseIntegral
             P.spaces
             _ <- P.string "<->"
             P.spaces
-            ns <- P.sepBy parseNumber (P.spaces >> P.char ',' >> P.spaces)
+            ns <- P.sepBy parseIntegral (P.spaces >> P.char ',' >> P.spaces)
             return (n, ns)
 
 updateGraph :: Graph -> (Int, [Int]) -> Graph

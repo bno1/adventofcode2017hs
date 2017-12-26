@@ -2,6 +2,7 @@ module Main where
 
 import Control.Monad.ST
 import Data.Foldable (foldlM)
+
 import qualified Data.Vector.Unboxed.Mutable as VUM
 
 

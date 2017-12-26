@@ -1,12 +1,13 @@
 module Main where
 
+import Common.Parsers
 import Control.Applicative ((<|>))
 import Control.Monad.State
 import Data.List
 import Data.Maybe (fromJust, fromMaybe)
 
-import qualified Text.Parsec as P
 import qualified Data.Map as M
+import qualified Text.Parsec as P
 
 
 data Tree = Empty
@@ -33,15 +34,13 @@ findMap :: (a -> Bool) -> M.Map k a -> Maybe (k, a)
 findMap f = M.foldrWithKey (\k a r -> if f a then Just (k, a) else r) Nothing
 
 parseLine :: String -> Either String (String, Int, [String])
-parseLine = perrToStr . P.parse p "parseLine"
+parseLine = parseErrToStr . P.parse p "parseLine"
     where
-        perrToStr (Left err) = Left $ show err
-        perrToStr (Right x) = Right x
         p = do
             prog <- P.many1 P.alphaNum
             P.spaces
             _ <- P.char '('
-            weight <- P.many1 P.digit
+            weight <- parseIntegral
             _ <- P.char ')'
             children <- P.option [] $ do
                 P.spaces
@@ -49,7 +48,7 @@ parseLine = perrToStr . P.parse p "parseLine"
                 P.spaces
                 P.sepBy1 (P.many1 P.alphaNum) (P.char ',' >> P.spaces)
             P.eof
-            return (prog, read weight, children)
+            return (prog, weight, children)
 
 buildTree :: [(String, Int, [String])] -> Tree
 buildTree lst = tree root

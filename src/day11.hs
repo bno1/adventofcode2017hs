@@ -1,7 +1,9 @@
 module Main where
 
-import Data.Maybe (fromMaybe)
+import Common
 import Data.Char (isLetter)
+import Data.Maybe (fromMaybe)
+
 
 data Dir
     = N
@@ -34,12 +36,9 @@ parseDir str = fromMaybe err $ lookup str dirs
         dirs = zip ["n", "ne", "nw", "se", "sw", "s"]
                    [ N,   NE,   NW,   SE,   SW,   S ]
 
-words' :: String -> [String]
-words' = words . map (\c -> if isLetter c then c else ' ')
-
 main :: IO ()
 main = do
-    input <- map parseDir . words' <$> getLine
+    input <- map parseDir . wordsBy isLetter <$> getLine
 
     let steps = scanl step (Pos 0 0 0) input
 

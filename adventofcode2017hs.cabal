@@ -47,14 +47,14 @@ executable day05
   hs-source-dirs:      src/
   main-is:             day05.hs
   default-language:    Haskell2010
-  build-depends:       base, vector >= 0.5.7
+  build-depends:       base, vector >= 0.12.0
   ghc-options:         -Wall -rtsopts -O2
 
 executable day06
   hs-source-dirs:      src/
   main-is:             day06.hs
   default-language:    Haskell2010
-  build-depends:       base, vector >= 0.5.7
+  build-depends:       base, vector >= 0.12.0
   ghc-options:         -Wall -rtsopts
 
 executable day07
@@ -63,6 +63,7 @@ executable day07
   default-language:    Haskell2010
   build-depends:       base, parsec >= 3.1, containers >= 0.5.7, mtl >= 2.2
   ghc-options:         -Wall -rtsopts
+  other-modules:       Common.Parsers
 
 executable day08
   hs-source-dirs:      src/
@@ -70,6 +71,7 @@ executable day08
   default-language:    Haskell2010
   build-depends:       base, parsec >= 3.1, containers >= 0.5.7, mtl >= 2.2
   ghc-options:         -Wall -rtsopts
+  other-modules:       Common.Parsers
 
 executable day09
   hs-source-dirs:      src/
@@ -82,8 +84,9 @@ executable day10
   hs-source-dirs:      src/
   main-is:             day10.hs
   default-language:    Haskell2010
-  build-depends:       base, vector >= 0.5.7, mtl >= 2.2
+  build-depends:       base, vector >= 0.12.0, mtl >= 2.2
   ghc-options:         -Wall -rtsopts
+  other-modules:       Common, Common.KnotHash
 
 executable day11
   hs-source-dirs:      src/
@@ -91,6 +94,7 @@ executable day11
   default-language:    Haskell2010
   build-depends:       base
   ghc-options:         -Wall -rtsopts
+  other-modules:       Common
 
 executable day12
   hs-source-dirs:      src/
@@ -98,6 +102,7 @@ executable day12
   default-language:    Haskell2010
   build-depends:       base, parsec >= 3.1, containers >= 0.5.7, mtl >= 2.2
   ghc-options:         -Wall -rtsopts
+  other-modules:       Common.Parsers
 
 executable day13
   hs-source-dirs:      src/
@@ -105,6 +110,7 @@ executable day13
   default-language:    Haskell2010
   build-depends:       base
   ghc-options:         -Wall -rtsopts
+  other-modules:       Common, Common.KnotHash
 
 source-repository head
   type:     git

@@ -1,5 +1,6 @@
 module Main where
 
+
 score :: String -> (Int, Int)
 score = group 0 1 0
     where

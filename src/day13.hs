@@ -1,12 +1,12 @@
 module Main where
 
+import Common
 import Control.Monad.Fix
 import Data.Char (isDigit)
 
+
 parseLine :: String -> (Int, Int)
-parseLine s = (l, r)
-    where
-        [l, r] = map read $ words $ map (\c -> if isDigit c then c else ' ' ) s
+parseLine s = let [l, r] = map read $ wordsBy isDigit s in (l, r)
 
 -- checks if a packet delayed `t` picoseconds will be detected by the scanner
 -- at layer `l` with range `r`
