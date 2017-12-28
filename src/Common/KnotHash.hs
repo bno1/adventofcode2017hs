@@ -3,9 +3,11 @@
 module Common.KnotHash
     ( khRoundW8
     , khHashW8
+    , khHashStr
     ) where
 
 import Data.Bits (xor, zeroBits, Bits)
+import Data.Char (ord)
 import Data.Word (Word8)
 import Control.Monad (unless, forM_)
 import Control.Monad.State
@@ -88,3 +90,6 @@ khRoundW8 lengths = VU.toList v
 
 khHashW8 :: [Int] -> [Word8]
 khHashW8 lengths = evalKnotHash [0..255] $ khHash lengths
+
+khHashStr :: String -> [Word8]
+khHashStr str = khHashW8 $ map ord str ++ [17, 31, 73, 47, 23]

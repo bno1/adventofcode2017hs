@@ -110,7 +110,15 @@ executable day13
   default-language:    Haskell2010
   build-depends:       base
   ghc-options:         -Wall -rtsopts
-  other-modules:       Common, Common.KnotHash
+  other-modules:       Common
+
+executable day14
+  hs-source-dirs:      src/
+  main-is:             day14.hs
+  default-language:    Haskell2010
+  build-depends:       base, vector >= 0.12.0, mtl >= 2.2
+  ghc-options:         -Wall -rtsopts
+  other-modules:       Common.KnotHash
 
 source-repository head
   type:     git
