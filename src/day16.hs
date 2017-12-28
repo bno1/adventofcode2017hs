@@ -41,7 +41,7 @@ makeDance len moves = runST $ do
     forM_ moves $ \case
         (Spin n) -> do
             VUM.copy temp per
-            forM_ [0.. len - 1] $ \i ->
+            forM_ [0..len - 1] $ \i ->
                 VUM.read temp ((i + len - n) `rem` len) >>= VUM.write per i
         (Exchange i j) -> VUM.swap per i j
         (Partner a b) -> VUM.swap labels a b
